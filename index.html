@@ -19,14 +19,13 @@
     <div class="big"><span id="cin">0</span><small> из </small><span id="ctot">0</span></div>
     <div class="pb"><i id="pb"></i></div>
     <div class="sub">зашли · осталось <b id="cleft">0</b></div>
-    <details class="byw"><summary>По институтам</summary><div class="by" id="by"></div></details>
   </div>
 </header>
 
 <main>
   <div id="msg" class="msg" hidden role="status" aria-live="polite"></div>
   <div class="srch">
-    <input id="q" placeholder="Номер билета или имя" autocomplete="off" autocapitalize="off" enterkeyhint="go" aria-label="Номер билета или имя">
+    <input id="q" placeholder="Номер билета" autocomplete="off" autocapitalize="off" enterkeyhint="go" aria-label="Номер билета">
     <button id="clr" aria-label="Очистить">×</button>
   </div>
   <div class="tabs" id="tabs">
@@ -53,10 +52,6 @@
       <input id="to" type="number" inputmode="numeric" placeholder="По №" value="327">
       <button class="btn" id="gen">Создать</button>
     </div>
-
-    <h4>Импорт списка</h4>
-    <textarea id="imp" rows="5" placeholder="По одной строке: номер;имя&#10;1;Иванов Иван&#10;2;Петрова Анна"></textarea>
-    <button class="btn" id="impb">Добавить из списка</button>
 
     <h4>Удалить один билет</h4>
     <div class="row2">

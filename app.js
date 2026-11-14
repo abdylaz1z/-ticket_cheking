@@ -105,7 +105,7 @@ function matches() {
   if (filter === 'out') a = a.filter(t => !t.e);
   if (fac) a = a.filter(t => t.f === fac);
   if (q) {
-    a = a.filter(t => t.id.toLowerCase().startsWith(q) || t.n.toLowerCase().includes(q) || t.f.toLowerCase().includes(q));
+    a = a.filter(t => t.id.toLowerCase().startsWith(q) || t.f.toLowerCase().includes(q));
     a.sort((x, y) => (y.id.toLowerCase() === q) - (x.id.toLowerCase() === q));
   }
   return a;
@@ -115,18 +115,17 @@ function render() {
   const a = all(), tot = a.length, ent = a.filter(t => t.e).length;
   $('cin').textContent = ent; $('ctot').textContent = tot; $('cleft').textContent = tot - ent;
   $('pb').style.width = (tot ? ent / tot * 100 : 0) + '%';
-  const by = {}; a.forEach(t => { const f = t.f || 'Без института'; (by[f] ??= [0, 0])[1]++; if (t.e) by[f][0]++; });
-  const order = RANGES.map(r => r[2]).filter(f => by[f]).concat(by['Без института'] ? ['Без института'] : []);
-  $('by').innerHTML = order.map(f => `<span class="chip${by[f][0] === by[f][1] ? ' full' : ''}">${esc(f)} <b>${by[f][0]}/${by[f][1]}</b></span>`).join('');
-  const q = $('q').value.trim().toLowerCase(), m = matches(), shown = m.slice(0, 300);
-  $('list').innerHTML = shown.map((t, i) => {
-    const top = q && t.id.toLowerCase() === q && i === 0;
-    const sub = [t.f, t.e ? 'зашёл ' + tm(t.e) + (t.g ? ' · ' + t.g : '') : ''].filter(Boolean).join(' · ');
-    return `<div class="r${t.e ? ' in' : ''}${top ? ' top' : ''}"><b>${esc(t.id)}</b>` +
-      `<span class="nm">${t.n ? esc(t.n) : ''}<small>${esc(sub)}</small></span>` +
-      `<button class="${t.e ? 'u' : 'g'}" data-act="${t.e ? 'undo' : 'mark'}" data-id="${esc(t.id)}">${t.e ? 'Отменить' : 'Впустить'}</button></div>`;
-  }).join('') + (m.length > 300 ? `<div class="note">Показано 300 из ${m.length}. Уточните поиск.</div>` : '')
-    + (!tot ? '<div class="note">Билетов пока нет.<br><button class="btn" data-act="seed">Создать билеты 1–327 по институтам</button></div>'
+  const NO = 'Без института', by = {};
+  a.forEach(t => { const f = t.f || NO; (by[f] ??= [0, 0])[1]++; if (t.e) by[f][0]++; });
+  const q = $('q').value.trim().toLowerCase(), m = matches(), groups = {};
+  m.forEach(t => { (groups[t.f || NO] ??= []).push(t); });
+  const order = RANGES.map(r => r[2]).concat([NO]).filter(f => groups[f]);
+  $('list').innerHTML = order.map(f => {
+    const full = by[f][0] === by[f][1];
+    return `<section class="grp"><h3>${esc(f)} <small class="${full ? 'done' : ''}">${by[f][0]}/${by[f][1]}</small></h3><div class="chips">` +
+      groups[f].map(t => `<button class="cp${t.e ? ' in' : ''}${q && t.id.toLowerCase() === q ? ' top' : ''}" data-act="${t.e ? 'info' : 'mark'}" data-id="${esc(t.id)}" aria-label="Билет ${esc(t.id)}${t.e ? ', уже зашёл' : ''}">${esc(t.id)}</button>`).join('') +
+      '</div></section>';
+  }).join('') + (!tot ? '<div class="note">Билетов пока нет.<br><button class="btn" data-act="seed">Создать билеты 1–327 по институтам</button></div>'
             : !m.length ? '<div class="note">Ничего не найдено</div>' : '');
 }
 
@@ -140,6 +139,10 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = b.dataset.id, a = b.dataset.act;
   if (a === 'mark') { await act(id); }
+  else if (a === 'info') {
+    const r = D[key(id)] || {}; buzz([120, 80, 120]);
+    msg('bad', `⚠ Билет №${esc(id)} уже заходил в ${r.e ? tm(r.e) : ''}${r.g ? ' (' + esc(r.g) + ')' : ''}`, { act: 'undo', id, label: 'Отменить' });
+  }
   else if (a === 'undo') { if (confirm(`Отменить вход для билета №${id}?`)) { await run(store.unmark(id)); msg('warn', `Отметка с билета №${esc(id)} снята`); } }
   else if (a === 'addmark') { await run(store.add([{ id, f: facOf(+id) }])); await act(id); }
   else if (a === 'seed') { await seed(); }
@@ -167,15 +170,8 @@ $('gen').onclick = async () => {
   const items = []; for (let i = f; i <= t; i++) items.push({ id: String(i), f: facOf(i) });
   await run(store.add(items)); msg('ok', `Создано билетов: ${items.length}`);
 };
-$('impb').onclick = async () => {
-  const items = $('imp').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
-    const p = l.split(/[;\t,]/); return { id: p[0].trim(), name: p.slice(1).join(' ').trim(), f: facOf(+p[0]) };
-  }).filter(x => x.id);
-  if (!items.length) { msg('bad', 'Список пуст'); return; }
-  await run(store.add(items)); $('imp').value = ''; msg('ok', `Добавлено из списка: ${items.length}`);
-};
 $('csv').onclick = () => {
-  const rows = [['Номер', 'Институт', 'Имя', 'Зашёл', 'Время', 'Вход']].concat(all().map(t => [t.id, t.f, t.n, t.e ? 'да' : 'нет', t.e ? new Date(t.e).toLocaleString('ru') : '', t.g]));
+  const rows = [['Номер', 'Институт', 'Зашёл', 'Время', 'Вход']].concat(all().map(t => [t.id, t.f, t.e ? 'да' : 'нет', t.e ? new Date(t.e).toLocaleString('ru') : '', t.g]));
   const csv = '\ufeff' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = 'bilety.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
