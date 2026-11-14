@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="google" content="notranslate">
+<title>Students Day — вход</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Students Day — вход</h1>
+  <div class="orn">❖ ✦ ❖</div>
+  <div class="st" id="st">Подключаюсь…</div>
+  <div class="cnt">
+    <div class="big"><span id="cin">0</span><small> из </small><span id="ctot">0</span></div>
+    <div class="pb"><i id="pb"></i></div>
+    <div class="sub">зашли · осталось <b id="cleft">0</b></div>
+    <details class="byw"><summary>По институтам</summary><div class="by" id="by"></div></details>
+  </div>
+</header>
+
+<main>
+  <div id="msg" class="msg" hidden role="status" aria-live="polite"></div>
+  <div class="srch">
+    <input id="q" placeholder="Номер билета или имя" autocomplete="off" autocapitalize="off" enterkeyhint="go" aria-label="Номер билета или имя">
+    <button id="clr" aria-label="Очистить">×</button>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-f="all" class="on">Все</button>
+    <button data-f="out">Не зашли</button>
+    <button data-f="in">Зашли</button>
+  </div>
+  <select id="fac" class="fac" aria-label="Институт"></select>
+  <div class="list" id="list"></div>
+
+  <details class="adm">
+    <summary>Настройка</summary>
+    <label>Название вашего входа (видно в отметке)
+      <input id="gate" placeholder="Например: Вход 1">
+    </label>
+
+    <h4>Билеты по институтам</h4>
+    <p class="hint">1–80 ИМТИ · 81–118 ЭФ · 119–144 ФЭУ · 145–196 ФАИС · 197–248 ФТИП · 249–275 Коллеж · 276–313 ИМОПИО · 314–327 Микс</p>
+    <button class="btn" id="seed">Создать / обновить билеты 1–327</button>
+
+    <h4>Создать билеты по номерам</h4>
+    <div class="row2">
+      <input id="from" type="number" inputmode="numeric" placeholder="С №" value="1">
+      <input id="to" type="number" inputmode="numeric" placeholder="По №" value="327">
+      <button class="btn" id="gen">Создать</button>
+    </div>
+
+    <h4>Импорт списка</h4>
+    <textarea id="imp" rows="5" placeholder="По одной строке: номер;имя&#10;1;Иванов Иван&#10;2;Петрова Анна"></textarea>
+    <button class="btn" id="impb">Добавить из списка</button>
+
+    <h4>Удалить один билет</h4>
+    <div class="row2">
+      <input id="delid" placeholder="Номер билета">
+      <button class="btn d" id="delone">Удалить</button>
+    </div>
+
+    <h4>Прочее</h4>
+    <div class="row2">
+      <button class="btn" id="csv">Скачать CSV</button>
+      <button class="btn d" id="rst">Сбросить отметки</button>
+      <button class="btn d" id="clear">Удалить все билеты</button>
+    </div>
+  </details>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

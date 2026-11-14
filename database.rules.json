@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "tables": {
+      ".read": true,
+      ".write": true
+    },
+    "tickets": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
