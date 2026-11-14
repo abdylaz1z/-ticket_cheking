@@ -125,7 +125,7 @@ function render() {
     return `<section class="grp"><h3>${esc(f)} <small class="${full ? 'done' : ''}">${by[f][0]}/${by[f][1]}</small></h3><div class="chips">` +
       groups[f].map(t => `<button class="cp${t.e ? ' in' : ''}${q && t.id.toLowerCase() === q ? ' top' : ''}" data-act="${t.e ? 'info' : 'mark'}" data-id="${esc(t.id)}" aria-label="Билет ${esc(t.id)}${t.e ? ', уже зашёл' : ''}">${esc(t.id)}</button>`).join('') +
       '</div></section>';
-  }).join('') + (!tot ? '<div class="note">Билетов пока нет.<br><button class="btn" data-act="seed">Создать билеты 1–327 по институтам</button></div>'
+  }).join('') + (!tot ? '<div class="note">Загружаю билеты…</div>'
             : !m.length ? '<div class="note">Ничего не найдено</div>' : '');
 }
 
@@ -145,7 +145,6 @@ document.addEventListener('click', async e => {
   }
   else if (a === 'undo') { if (confirm(`Отменить вход для билета №${id}?`)) { await run(store.unmark(id)); msg('warn', `Отметка с билета №${esc(id)} снята`); } }
   else if (a === 'addmark') { await run(store.add([{ id, f: facOf(+id) }])); await act(id); }
-  else if (a === 'seed') { await seed(); }
 });
 $('q').addEventListener('input', render);
 $('q').addEventListener('keydown', async e => {
@@ -164,12 +163,6 @@ $('tabs').onclick = e => {
 $('gate').value = gate;
 $('gate').oninput = e => { gate = e.target.value.trim(); try { localStorage.setItem('gate', gate); } catch {} };
 
-$('gen').onclick = async () => {
-  const f = parseInt($('from').value, 10), t = parseInt($('to').value, 10);
-  if (!(f >= 0) || !(t >= f) || t - f > 5000) { msg('bad', 'Проверьте диапазон номеров'); return; }
-  const items = []; for (let i = f; i <= t; i++) items.push({ id: String(i), f: facOf(i) });
-  await run(store.add(items)); msg('ok', `Создано билетов: ${items.length}`);
-};
 $('csv').onclick = () => {
   const rows = [['Номер', 'Институт', 'Зашёл', 'Время', 'Вход']].concat(all().map(t => [t.id, t.f, t.e ? 'да' : 'нет', t.e ? new Date(t.e).toLocaleString('ru') : '', t.g]));
   const csv = '\ufeff' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n');
@@ -180,15 +173,9 @@ $('rst').onclick = async () => {
   if (!confirm('Сбросить ВСЕ отметки о входе?')) return;
   await run(store.reset(all().map(t => t.id))); msg('warn', 'Все отметки сброшены');
 };
-$('clear').onclick = async () => {
-  if (!confirm('Удалить ВСЕ билеты? Это нельзя отменить.')) return;
-  if (!confirm('Точно удалить все билеты?')) return;
-  await run(store.clear()); msg('warn', 'Все билеты удалены');
-};
 
 $('fac').innerHTML = '<option value="">Все институты</option>' + RANGES.map(r => `<option>${r[2]}</option>`).join('');
 $('fac').onchange = e => { fac = e.target.value; render(); };
-$('seed').onclick = seed;
 $('delone').onclick = async () => {
   const id = $('delid').value.trim(); if (!id) return;
   if (!D[key(id)]) { msg('warn', `Билет №${esc(id)} не найден`); return; }
@@ -197,7 +184,12 @@ $('delone').onclick = async () => {
 };
 
 /* ---------- Запуск ---------- */
-const onData = d => { D = d || {}; render(); };
+let seeded = false;
+const onData = d => {
+  D = d || {}; render();
+  // все билеты 1–327 создаются автоматически при первом запуске, когда база пустая
+  if (!seeded && !Object.keys(D).length) { seeded = true; seed(); }
+};
 (async () => {
   render();
   try {
