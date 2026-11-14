@@ -1,5 +1,5 @@
 import { firebaseConfig } from './config.js';
-
+ 
 const $ = id => document.getElementById(id);
 const FB = 'https://www.gstatic.com/firebasejs/10.12.2/';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -10,17 +10,17 @@ const cmp = (a, b) => a.id.localeCompare(b.id, 'ru', { numeric: true });
 const RANGES = [[1, 80, 'ИМТИ'], [81, 118, 'ЭФ'], [119, 144, 'ФЭУ'], [145, 196, 'ФАИС'],
                 [197, 248, 'ФТИП'], [249, 275, 'Коллеж'], [276, 313, 'ИМОПИО'], [314, 327, 'Микс']];
 const facOf = n => { for (const [a, b, f] of RANGES) if (n >= a && n <= b) return f; return ''; };
-
+ 
 let fac = '';
 let D = {};          // { k12: {n, e, g, c} }  e = время входа, g = вход, n = имя
 let store, filter = 'all', gate = '', msgTimer;
 try { gate = localStorage.getItem('gate') || ''; } catch {}
-
+ 
 const all = () => Object.keys(D).map(k => ({ id: k.slice(1), n: D[k].n || '', e: D[k].e || 0, g: D[k].g || '', f: D[k].f || '' })).sort(cmp);
 const status = (t, c = '') => { const e = $('st'); e.textContent = t; e.className = 'st ' + c; };
 const run = p => Promise.resolve(p).catch(() => { status('Не удалось сохранить. Проверьте правила базы.', 'bad'); });
 const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch {} };
-
+ 
 /* ---------- Хранилища ---------- */
 async function firebaseStore() {
   const { initializeApp } = await import(FB + 'firebase-app.js');
@@ -53,7 +53,7 @@ async function firebaseStore() {
     clear: () => m.remove(r('tickets')),
   };
 }
-
+ 
 function localStore() {
   const K = 'students-day-tickets-v1';
   let d = {}; try { d = JSON.parse(localStorage.getItem(K)) || {}; } catch {}
@@ -74,7 +74,7 @@ function localStore() {
     clear: () => { d = {}; save(); },
   };
 }
-
+ 
 /* ---------- Сообщения ---------- */
 function msg(type, text, btn) {
   const e = $('msg'); clearTimeout(msgTimer);
@@ -82,7 +82,7 @@ function msg(type, text, btn) {
   e.innerHTML = '<span>' + text + '</span>' + (btn ? `<button data-act="${btn.act}" data-id="${esc(btn.id)}">${btn.label}</button>` : '');
   msgTimer = setTimeout(() => { e.hidden = true; }, btn ? 9000 : 5000);
 }
-
+ 
 /* ---------- Отметка ---------- */
 async function act(id) {
   const rec = D[key(id)];
@@ -96,7 +96,7 @@ async function act(id) {
   msg('bad', `⚠ Билет №${esc(id)} только что отметили${r.e ? ' в ' + tm(r.e) : ''}${r.g ? ' (' + esc(r.g) + ')' : ''}`);
   return false;
 }
-
+ 
 /* ---------- Список ---------- */
 function matches() {
   const q = $('q').value.trim().toLowerCase();
@@ -110,7 +110,7 @@ function matches() {
   }
   return a;
 }
-
+ 
 function render() {
   const a = all(), tot = a.length, ent = a.filter(t => t.e).length;
   $('cin').textContent = ent; $('ctot').textContent = tot; $('cleft').textContent = tot - ent;
@@ -128,12 +128,12 @@ function render() {
   }).join('') + (!tot ? '<div class="note">Загружаю билеты…</div>'
             : !m.length ? '<div class="note">Ничего не найдено</div>' : '');
 }
-
+ 
 async function seed() {
   const items = []; for (let i = 1; i <= RANGES[RANGES.length - 1][1]; i++) items.push({ id: String(i), f: facOf(i) });
   await run(store.add(items)); msg('ok', `Создано билетов: ${items.length}`);
 }
-
+ 
 /* ---------- События ---------- */
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -162,7 +162,7 @@ $('tabs').onclick = e => {
 };
 $('gate').value = gate;
 $('gate').oninput = e => { gate = e.target.value.trim(); try { localStorage.setItem('gate', gate); } catch {} };
-
+ 
 $('csv').onclick = () => {
   const rows = [['Номер', 'Институт', 'Зашёл', 'Время', 'Вход']].concat(all().map(t => [t.id, t.f, t.e ? 'да' : 'нет', t.e ? new Date(t.e).toLocaleString('ru') : '', t.g]));
   const csv = '\ufeff' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n');
@@ -173,7 +173,7 @@ $('rst').onclick = async () => {
   if (!confirm('Сбросить ВСЕ отметки о входе?')) return;
   await run(store.reset(all().map(t => t.id))); msg('warn', 'Все отметки сброшены');
 };
-
+ 
 $('fac').innerHTML = '<option value="">Все институты</option>' + RANGES.map(r => `<option>${r[2]}</option>`).join('');
 $('fac').onchange = e => { fac = e.target.value; render(); };
 $('delone').onclick = async () => {
@@ -182,7 +182,7 @@ $('delone').onclick = async () => {
   if (!confirm(`Удалить билет №${id}?`)) return;
   await run(store.del(id)); $('delid').value = ''; msg('warn', `Билет №${esc(id)} удалён`);
 };
-
+ 
 /* ---------- Запуск ---------- */
 let seeded = false;
 const onData = d => {
@@ -197,7 +197,7 @@ const onData = d => {
       store = await firebaseStore();
       const t = setTimeout(() => status('Нет связи с базой. Проверьте интернет и config.js.', 'bad'), 10000);
       store.sub(d => { clearTimeout(t); onData(d); status('● Данные общие и сохраняются', 'good'); },
-                () => status('Ошибка чтения базы. Проверьте правила (ветка tickets).', 'bad'));
+                () => { clearTimeout(t); status('Ошибка чтения базы. Опубликуйте правила для ветки tickets в Firebase.', 'bad'); });
     } else {
       store = localStore(); store.sub(onData);
       status('Локальный режим: данные только в этом браузере (заполните config.js)', 'bad');
@@ -207,3 +207,4 @@ const onData = d => {
     status('Не удалось подключить базу — локальный режим', 'bad');
   }
 })();
+ 
